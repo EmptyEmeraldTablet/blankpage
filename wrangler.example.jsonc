@@ -1,0 +1,92 @@
+/**
+ * Template configuration.
+ * Copy to wrangler.jsonc and replace the placeholder values.
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "blankpage",
+	"compatibility_date": "2026-02-24",
+	"main": "server/index.ts",
+	"observability": {
+		"enabled": true
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"vars": {
+		"APP_PASSWORD": "REPLACE_WITH_APP_PASSWORD",
+		"SESSION_TTL_SECONDS": "604800",
+		"CLIP_TTL_SECONDS": "3600",
+		"CACHE_TTL_SECONDS": "172800",
+		"CORS_ALLOWED_ORIGINS": "REPLACE_WITH_CORS_ALLOWED_ORIGINS"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "MEMO_KV",
+			"id": "REPLACE_WITH_KV_ID",
+			"preview_id": "REPLACE_WITH_KV_PREVIEW_ID"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "memo_db",
+			"database_id": "REPLACE_WITH_D1_ID",
+			"migrations_dir": "migrations"
+		}
+	],
+	"env": {
+		"frontend": {
+			"vars": {
+				"APP_PASSWORD": "REPLACE_WITH_APP_PASSWORD",
+				"SESSION_TTL_SECONDS": "604800",
+				"CLIP_TTL_SECONDS": "3600",
+				"CACHE_TTL_SECONDS": "172800",
+				"CORS_ALLOWED_ORIGINS": "REPLACE_WITH_CORS_ALLOWED_ORIGINS"
+			},
+			"kv_namespaces": [
+				{
+					"binding": "MEMO_KV",
+					"id": "REPLACE_WITH_KV_ID",
+					"preview_id": "REPLACE_WITH_KV_PREVIEW_ID"
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "memo_db",
+					"database_id": "REPLACE_WITH_D1_ID",
+					"migrations_dir": "migrations"
+				}
+			],
+			"assets": {
+				"directory": "dist",
+				"not_found_handling": "single-page-application"
+			}
+		},
+		"worker_only": {
+			"vars": {
+				"APP_PASSWORD": "REPLACE_WITH_APP_PASSWORD",
+				"SESSION_TTL_SECONDS": "604800",
+				"CLIP_TTL_SECONDS": "3600",
+				"CACHE_TTL_SECONDS": "172800",
+				"CORS_ALLOWED_ORIGINS": "REPLACE_WITH_CORS_ALLOWED_ORIGINS"
+			},
+			"kv_namespaces": [
+				{
+					"binding": "MEMO_KV",
+					"id": "REPLACE_WITH_KV_ID",
+					"preview_id": "REPLACE_WITH_KV_PREVIEW_ID"
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "memo_db",
+					"database_id": "REPLACE_WITH_D1_ID",
+					"migrations_dir": "migrations"
+				}
+			]
+		}
+	}
+}

@@ -8,6 +8,7 @@
 		"build": "run-p type-check \"build-only {@}\" --",
 		"preview": "npm run build && wrangler dev",
 		"build-only": "vite build",
+		"setup": "node scripts/setup.mjs",
 		"type-check": "vue-tsc --build",
 		"deploy": "npm run build && wrangler deploy",
 		"cf-typegen": "wrangler types"

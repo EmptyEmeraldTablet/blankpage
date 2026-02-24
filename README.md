@@ -1,42 +1,77 @@
 # blankpage
 
-This template should help get you started developing with Vue 3 in Vite.
+Single-user memo app built with Vue + Cloudflare Workers. Data lives in D1, cache/auth/clip in KV.
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Quickstart
 
 ```sh
 npm install
+npm run setup
+npm run dev
 ```
 
-### Compile and Hot-Reload for Development
+`npm run setup` can create KV/D1 and write `wrangler.jsonc`. It also optionally writes `.env.local` for `VITE_API_BASE`.
+
+## Manual setup
+
+1. Copy template config:
+
+```sh
+cp wrangler.example.jsonc wrangler.jsonc
+```
+
+2. Create resources (or use existing ones):
+
+```sh
+npx wrangler kv:namespace create MEMO_KV
+npx wrangler kv:namespace create MEMO_KV --preview
+npx wrangler d1 create memo_db
+```
+
+3. Fill `wrangler.jsonc` placeholders:
+
+- `REPLACE_WITH_KV_ID`
+- `REPLACE_WITH_KV_PREVIEW_ID`
+- `REPLACE_WITH_D1_ID`
+- `REPLACE_WITH_APP_PASSWORD`
+- `REPLACE_WITH_CORS_ALLOWED_ORIGINS`
+
+4. Apply local migrations:
+
+```sh
+npx wrangler d1 migrations apply memo_db --local
+```
+
+5. (Optional) configure API base URL:
+
+```sh
+cp .env.example .env.local
+```
+
+Set `VITE_API_BASE` when calling a remote Worker.
+
+## Development
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Deploy
+
+Worker-only:
+
+```sh
+npx wrangler deploy --config wrangler.jsonc --env worker_only
+```
+
+Frontend assets + Worker:
 
 ```sh
 npm run build
+npx wrangler deploy --config wrangler.jsonc --env frontend
 ```
+
+## Notes
+
+- `wrangler.jsonc` is ignored by git. Use `wrangler.example.jsonc` as the shared template.
+- Set `CORS_ALLOWED_ORIGINS` to your Pages domain in production.
