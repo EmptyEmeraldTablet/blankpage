@@ -2,6 +2,8 @@
 
 Single-user memo app built with Vue + Cloudflare Workers. Data lives in D1, cache/auth/clip in KV.
 
+中文文档: [README.zh-CN.md](README.zh-CN.md)
+
 ## Project overview
 
 Blankpage is a minimal, self-hosted memo app template designed for personal use. It ships with a Vue SPA frontend and a Worker API backend, with a simple password-based login and no registration or admin panel. Memos are stored in D1, while KV is used for authentication tokens, memo caching, and a short-lived cloud clipboard.
