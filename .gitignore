@@ -44,3 +44,5 @@ __screenshots__/
 !.dev.vars.example
 .env*
 !.env.example
+!wrangler.example.jsonc
+wrangler.jsonc 
