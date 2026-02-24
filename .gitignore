@@ -45,4 +45,4 @@ __screenshots__/
 .env*
 !.env.example
 !wrangler.example.jsonc
-wrangler.jsonc 
+wrangler.jsonc
