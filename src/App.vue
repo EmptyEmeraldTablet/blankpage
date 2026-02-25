@@ -45,6 +45,8 @@ const clipAutosavePending = ref(false)
 const autosaveStatus = ref('')
 const autosaveTimer = ref<number | null>(null)
 
+const blockingCount = ref(0)
+const isBlocking = computed(() => blockingCount.value > 0)
 const selectedMemo = computed(() => memos.value.find((memo) => memo.id === selectedId.value) || null)
 const editorCount = computed(() => editorContent.value.trim().length)
 const filteredMemos = computed(() => {
@@ -73,6 +75,15 @@ const buildApiUrl = (path: string) => {
   if (!NORMALIZED_API_BASE) return path
   if (path.startsWith('/')) return `${NORMALIZED_API_BASE}${path}`
   return `${NORMALIZED_API_BASE}/${path}`
+}
+
+const withBlocking = async <T,>(task: () => Promise<T>) => {
+  blockingCount.value += 1
+  try {
+    return await task()
+  } finally {
+    blockingCount.value = Math.max(0, blockingCount.value - 1)
+  }
 }
 
 const fetchWithTimeout = async (path: string, init: RequestInit = {}) => {
@@ -144,29 +155,37 @@ const loadClip = async () => {
   }
 }
 
+const refreshAll = async () => {
+  await withBlocking(async () => {
+    await Promise.all([loadMemos(), loadClip()])
+  })
+}
+
 const login = async () => {
   authError.value = ''
-  try {
-    const response = await fetchWithTimeout('/api/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ password: loginPassword.value }),
-    })
-    if (!response.ok) {
-      authError.value = '密码不正确。'
-      return
+  await withBlocking(async () => {
+    try {
+      const response = await fetchWithTimeout('/api/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: loginPassword.value }),
+      })
+      if (!response.ok) {
+        authError.value = '密码不正确。'
+        return
+      }
+      const data = (await response.json()) as { token?: string }
+      if (!data.token) {
+        authError.value = '登录失败，未返回令牌。'
+        return
+      }
+      setToken(data.token)
+      loginPassword.value = ''
+      await refreshAll()
+    } catch {
+      authError.value = '登录失败，请重试。'
     }
-    const data = (await response.json()) as { token?: string }
-    if (!data.token) {
-      authError.value = '登录失败，未返回令牌。'
-      return
-    }
-    setToken(data.token)
-    loginPassword.value = ''
-    await Promise.all([loadMemos(), loadClip()])
-  } catch {
-    authError.value = '登录失败，请重试。'
-  }
+  })
 }
 
 const signOut = () => {
@@ -443,7 +462,7 @@ const handleShortcut = (event: KeyboardEvent) => {
 
 onMounted(async () => {
   if (token.value) {
-    await Promise.all([loadMemos(), loadClip()])
+    await refreshAll()
   }
   isBooting.value = false
 })
@@ -461,6 +480,9 @@ onUnmounted(() => {
 <template>
   <div class="app">
     <div class="background-glow"></div>
+    <div v-if="isBlocking" class="global-blocker" role="status" aria-live="polite">
+      <div class="global-loading-bar">正在加载后端内容...</div>
+    </div>
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark">BP</span>
@@ -470,7 +492,7 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="topbar-actions">
-        <button v-if="token" class="ghost-button" @click="loadMemos" :disabled="isLoading">
+        <button v-if="token" class="ghost-button" @click="refreshAll" :disabled="isLoading">
           刷新
         </button>
         <button v-if="token" class="ghost-button" @click="signOut">退出登录</button>
@@ -620,6 +642,29 @@ onUnmounted(() => {
     radial-gradient(circle at 80% 10%, rgba(108, 163, 255, 0.22), transparent 55%),
     radial-gradient(circle at 70% 80%, rgba(120, 255, 206, 0.18), transparent 50%);
   z-index: -1;
+}
+
+.global-blocker {
+  position: fixed;
+  inset: 0;
+  background: rgba(244, 241, 234, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  pointer-events: all;
+  z-index: 20;
+}
+
+.global-loading-bar {
+  margin-top: 1.2rem;
+  background: rgba(18, 18, 18, 0.85);
+  color: #ffffff;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 24px rgba(18, 18, 18, 0.2);
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
 .topbar {
@@ -878,6 +923,21 @@ onUnmounted(() => {
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 0.7;
     transform: translateY(0);
   }
 }
