@@ -647,23 +647,30 @@ onUnmounted(() => {
 .global-blocker {
   position: fixed;
   inset: 0;
-  background: rgba(244, 241, 234, 0.4);
+  background: rgba(244, 241, 234, 0.55);
   backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+  padding-top: 1.6rem;
   pointer-events: all;
   z-index: 20;
 }
 
 .global-loading-bar {
-  margin-top: 1.2rem;
-  background: rgba(18, 18, 18, 0.85);
-  color: #ffffff;
-  padding: 0.55rem 1.2rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
-  box-shadow: 0 12px 24px rgba(18, 18, 18, 0.2);
+  background: rgba(255, 255, 255, 0.92);
+  color: #1b1b1b;
+  padding: 0.7rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(18, 18, 18, 0.12);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  max-width: min(420px, calc(100% - 2.5rem));
+  text-align: center;
+  line-height: 1.3;
+  white-space: normal;
+  box-shadow: 0 12px 24px rgba(18, 18, 18, 0.12);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
