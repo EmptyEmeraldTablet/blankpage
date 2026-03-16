@@ -13,7 +13,7 @@ type ClipPayload = {
   created_at?: string
 }
 
-const AUTOSAVE_DELAY_MS = 5000
+const AUTOSAVE_DELAY_MS = 15000
 const REQUEST_TIMEOUT_MS = 10000
 const API_BASE = (import.meta.env.VITE_API_BASE || '').trim()
 const NORMALIZED_API_BASE = API_BASE.replace(/\/$/, '')
@@ -221,7 +221,8 @@ const startNewMemo = () => {
 
 const saveMemo = async (options: { silent?: boolean; fromAutosave?: boolean } = {}) => {
   if (isSaving.value) return
-  const content = editorContent.value.trim()
+  const snapshot = editorContent.value
+  const content = snapshot.trim()
   if (!content) return
   if (options.fromAutosave && content === memoLastSavedContent.value) {
     return
@@ -231,14 +232,15 @@ const saveMemo = async (options: { silent?: boolean; fromAutosave?: boolean } = 
     authError.value = ''
   }
   try {
-    if (selectedId.value) {
+    let data: MemoRow
+    const isNewMemo = !selectedId.value
+    if (!isNewMemo) {
       const response = await apiFetch(`/api/memos/${selectedId.value}`, {
         method: 'PUT',
         body: JSON.stringify({ content }),
       })
-      const data = (await response.json()) as MemoRow
+      data = (await response.json()) as MemoRow
       memos.value = memos.value.map((memo) => (memo.id === data.id ? data : memo))
-      selectMemo(data)
     } else {
       if (options.fromAutosave && content.length < 3) {
         return
@@ -247,16 +249,37 @@ const saveMemo = async (options: { silent?: boolean; fromAutosave?: boolean } = 
         method: 'POST',
         body: JSON.stringify({ content }),
       })
-      const data = (await response.json()) as MemoRow
+      data = (await response.json()) as MemoRow
       memos.value = [data, ...memos.value]
-      selectMemo(data)
     }
-    editorDirty.value = false
+    if (isNewMemo) {
+      selectedId.value = data.id
+    }
+    const contentUnchanged = editorContent.value === snapshot
     memoLastSavedContent.value = content
-    if (options.fromAutosave) {
-      autosaveStatus.value = `已自动保存 ${formatTime(new Date().toISOString())}`
+    if (contentUnchanged) {
+      editorContent.value = data.content
+      editorDirty.value = false
+      if (options.fromAutosave) {
+        autosaveStatus.value = `已自动保存 ${formatTime(new Date().toISOString())}`
+        editorStatus.value = ''
+      } else {
+        editorStatus.value = '已保存。'
+      }
+    } else {
+      editorDirty.value = true
+      if (selectedId.value) {
+        memos.value = memos.value.map((memo) =>
+          memo.id === selectedId.value ? { ...memo, content: editorContent.value, updated_at: data.updated_at } : memo,
+        )
+      }
+      const suffix = '（仍有未保存内容）'
+      if (options.fromAutosave) {
+        autosaveStatus.value = `已自动保存 ${formatTime(new Date().toISOString())}${suffix}`
+      } else {
+        editorStatus.value = `已保存${suffix}`
+      }
     }
-    editorStatus.value = options.fromAutosave ? '' : '已保存。'
   } catch (error) {
     if (!options.silent) {
       handleAuthError(error)
